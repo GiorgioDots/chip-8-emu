@@ -2,22 +2,18 @@
 #define CHIP8_H
 
 #include <stdint.h>
+#include "display.h"
+#include "stack.h"
 
 #define ROM_PROGRAM_START_IDX 0x200
-
-typedef struct display_t
-{
-    uint64_t cols;
-    uint32_t rows;
-} display_t;
 
 typedef struct Chip8
 {
     uint8_t memory[4096];
-    display_t display;
+    Display Display;
     uint16_t pc; // used only 12 bits
     uint16_t i;  // used only 12 bits
-    uint16_t stack[30];
+    Stack stack[30];
     uint8_t delay_timer;
     uint8_t sound_timer;
     uint8_t v[16]; // v[0xF] also is the flag
