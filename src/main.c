@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include <time.h>
 #include "chip8.h"
 #include "display.h"
 
@@ -90,9 +91,32 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // Starting main loop
+    const double counter_frequency = (double)SDL_GetPerformanceFrequency();
+
+    double cpu_accumulator = 0.0;
+    double timers_accumulator = 0.0;
+    double frame_accumulator = 0.0;
+
+    Uint64 previous_counter = SDL_GetPerformanceCounter();
+
     int running = 1;
+
     while (running)
     {
+        Uint64 current_counter = SDL_GetPerformanceCounter();
+        double elapsed = (double)(current_counter - previous_counter) / counter_frequency;
+        previous_counter = current_counter;
+
+        if (elapsed > 0.25)
+        {
+            elapsed = 0.25;
+        }
+
+        cpu_accumulator += elapsed;
+        timers_accumulator += elapsed;
+        frame_accumulator += elapsed;
+
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -100,13 +124,33 @@ int main(int argc, char **argv)
             {
                 running = 0;
             }
+            // Update keypad
+        }
 
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderClear(renderer);
+        while (cpu_accumulator >= CPU_PERIOD)
+        {
+            execute_instruction(&chip8);
+            cpu_accumulator -= CPU_PERIOD;
+        }
 
-            // Render logic
+        while (timers_accumulator >= TIMER_PERIOD)
+        {
+            tick_delay_timer(&chip8);
+            tick_sound_timer(&chip8);
 
-            SDL_RenderPresent(renderer);
+            timers_accumulator -= TIMER_PERIOD;
+        }
+
+        int render_due = 0;
+        while (frame_accumulator >= FRAME_PERIOD)
+        {
+            frame_accumulator -= FRAME_PERIOD;
+            render_due = 1;
+        }
+
+        if (render_due)
+        {
+            render_display(renderer, &chip8.display);
         }
     }
 

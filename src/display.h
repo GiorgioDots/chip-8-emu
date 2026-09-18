@@ -2,6 +2,7 @@
 #define DISPLAY_H
 
 #include <stdint.h>
+#include <SDL2/SDL.h>
 
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32
@@ -11,5 +12,7 @@ typedef struct
 {
     uint8_t pixels[DISPLAY_HEIGHT][DISPLAY_WIDTH];
 } Display;
+
+void render_display(SDL_Renderer *renderer, const Display *display);
 
 #endif
