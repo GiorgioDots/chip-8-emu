@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "process",
+      "label": "build chip8 debug",
+      "command": "/usr/bin/gcc",
+      "args": [
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-std=c17",
+        "-g",
+        "-O0",
+        "-I/usr/include/SDL2",
+        "-D_REENTRANT",
+
+        "src/main.c",
+        "src/chip8.c",
+        "src/fonts.c",
+        "src/display.c",
+        "src/stack.c",
+        "src/keypad.c",
+        "src/cpu.c",
+
+        "-o",
+        "${workspaceFolder}/out/chip8",
+        "-lSDL2"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

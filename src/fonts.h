@@ -2,8 +2,10 @@
 #define FONTS_H
 
 #include <stdint.h>
+#include "chip8.h"
 
 #define FONT_START_IDX 0x50
+#define FONT_SIZE 5 // 8-bit bytes
 
 static const uint8_t FONTS[80] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, /*0*/

@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
     printf("Read file %s, size %ld\n", file_path, sizeof rom_buffer);
 
-    Chip8 chip8 = initialize_chip8(rom_buffer, rom_len);
+    Chip8 chip8 = chip8_initialize(rom_buffer, rom_len);
 
     // Init graphics
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -129,14 +129,14 @@ int main(int argc, char **argv)
 
         while (cpu_accumulator >= CPU_PERIOD)
         {
-            execute_instruction(&chip8);
+            chip8_loop(&chip8);
             cpu_accumulator -= CPU_PERIOD;
         }
 
         while (timers_accumulator >= TIMER_PERIOD)
         {
-            tick_delay_timer(&chip8);
-            tick_sound_timer(&chip8);
+            chip8_tick_delay_timer(&chip8);
+            chip8_tick_sound_timer(&chip8);
 
             timers_accumulator -= TIMER_PERIOD;
         }
