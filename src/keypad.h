@@ -2,12 +2,16 @@
 #define KEYPAD_H
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <SDL2/SDL.h>
 
-static const uint8_t keys[0x1F] = {
-    0x1, 0x2, 0x3, 0xC, // Row 1
-    0x4, 0x5, 0x6, 0xD, // Row 2
-    0x7, 0x8, 0x9, 0xE, // Row 3
-    0xA, 0x0, 0xB, 0xF  // Row 4
-};
+uint8_t map_key(SDL_Scancode key);
+
+typedef struct
+{
+    bool pressed[16];
+    bool is_key_pressed;
+    uint8_t key_pressed;
+} Keypad;
 
 #endif

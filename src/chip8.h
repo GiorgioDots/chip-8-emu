@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "display.h"
 #include "stack.h"
+#include "keypad.h"
 
 #define CHIP8_MEMORY_SIZE 4096
 #define ROM_PROGRAM_START_IDX 0x200
@@ -23,6 +24,7 @@ typedef struct Chip8
     uint8_t delay_timer;
     uint8_t sound_timer;
     uint8_t v[16]; // v[0xF] also is the flag
+    Keypad keypad;
 } Chip8;
 
 Chip8 chip8_initialize(const uint8_t rom_buffer[], size_t rom_len);

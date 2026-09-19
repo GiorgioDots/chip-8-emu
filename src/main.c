@@ -125,6 +125,16 @@ int main(int argc, char **argv)
                 running = 0;
             }
             // Update keypad
+            if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+            {
+                int key = map_key(event.key.keysym.scancode);
+                if (key >= 0)
+                {
+                    chip8.keypad.pressed[key] = event.type == SDL_KEYDOWN;
+                    chip8.keypad.is_key_pressed = event.type == SDL_KEYDOWN;
+                    chip8.keypad.key_pressed = key;
+                }
+            }
         }
 
         while (cpu_accumulator >= CPU_PERIOD)

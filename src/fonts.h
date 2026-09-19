@@ -26,4 +26,6 @@ static const uint8_t FONTS[80] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  /*F*/
 };
 
+uint8_t map_font_to_idx(uint8_t font);
+
 #endif

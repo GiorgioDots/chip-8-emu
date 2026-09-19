@@ -94,8 +94,59 @@ void shift(Chip8 *chip8, uint8_t x, uint8_t y, bool is_right)
     {
         shifted = chip8->v[x] & 0x80;
         chip8->v[x] = chip8->v[x] << 1;
+        shifted = shifted >> 7;
     }
     chip8->v[V_FLAG_IDX] = shifted;
+}
+
+void add_to_index(Chip8 *chip8, uint8_t x)
+{
+    uint16_t sum = chip8->i + chip8->v[x];
+    if (sum > CHIP8_MEMORY_SIZE)
+    {
+        chip8->v[V_FLAG_IDX] = 1;
+    }
+    chip8->i = sum;
+}
+
+void binary_decimal_conversion(Chip8 *chip8, uint8_t x)
+{
+    uint16_t value = chip8->v[x];
+
+    chip8->memory[chip8->i] = value / 100;
+    chip8->memory[chip8->i + 1] = (value / 10) % 10;
+    chip8->memory[chip8->i + 2] = value % 10;
+}
+
+void store(Chip8 *chip8, uint8_t x)
+{
+    uint8_t i = 0;
+    while (i <= x)
+    {
+        chip8->memory[chip8->i + i] = chip8->v[i];
+        i++;
+    }
+}
+
+void load(Chip8 *chip8, uint8_t x)
+{
+    uint8_t i = 0;
+    while (i <= x)
+    {
+        chip8->v[i] = chip8->memory[chip8->i + i];
+        i++;
+    }
+}
+
+void jump_w_offset(Chip8 *chip8, uint16_t nnn, uint8_t x)
+{
+    uint8_t addr = nnn;
+    // superchip
+    if (false)
+    {
+        addr = nnn + chip8->v[x];
+    }
+    chip8->pc = addr;
 }
 #pragma endregion
 
@@ -200,8 +251,7 @@ void cpu_decode_execute(Chip8 *chip8, uint16_t *instruction)
             chip8->v[x] = chip8->v[x] ^ chip8->v[y];
             break;
         case 0x4:
-            uint16_t sum = chip8->v[x] + chip8->v[y];
-            if (sum > UINT8_MAX)
+            if (chip8->v[x] + chip8->v[y] > UINT8_MAX)
             {
                 chip8->v[V_FLAG_IDX] = 1;
             }
@@ -209,7 +259,7 @@ void cpu_decode_execute(Chip8 *chip8, uint16_t *instruction)
             {
                 chip8->v[V_FLAG_IDX] = 0;
             }
-            chip8->v[x] = (uint8_t)sum;
+            chip8->v[x] = (uint8_t)chip8->v[x] + chip8->v[y];
             break;
         case 0x5:
             sub(chip8, x, y);
@@ -239,13 +289,7 @@ void cpu_decode_execute(Chip8 *chip8, uint16_t *instruction)
         break;
 
     case 0xB:
-        uint8_t addr = nnn;
-        // superchip
-        if (false)
-        {
-            addr = nnn + chip8->v[x];
-        }
-        chip8->pc = addr;
+        jump_w_offset(chip8, nnn, x);
         break;
 
     case 0xC:
@@ -254,6 +298,62 @@ void cpu_decode_execute(Chip8 *chip8, uint16_t *instruction)
 
     case 0xD:
         display(chip8, n, x, y);
+        break;
+
+    case 0xE:
+        bool keypressed = chip8->keypad.pressed[chip8->v[x]];
+        if ((nn == 0x9E && keypressed) || (nn == 0xA1 && !keypressed))
+        {
+            chip8->pc += 2;
+        }
+        break;
+
+    case 0xF:
+        switch (nn)
+        {
+        case 0x07:
+            chip8->v[x] = chip8->delay_timer;
+            break;
+
+        case 0x15:
+            chip8->delay_timer = chip8->v[x];
+            break;
+
+        case 0x18:
+            chip8->sound_timer = chip8->v[x];
+            break;
+
+        case 0x1E:
+            add_to_index(chip8, x);
+            break;
+
+        case 0x0A:
+            if (!chip8->keypad.is_key_pressed)
+            {
+                chip8->pc -= 2;
+            }
+            else
+            {
+                chip8->v[x] = chip8->keypad.key_pressed;
+            }
+            break;
+
+        case 0x29:
+            chip8->i = FONT_START_IDX + map_font_to_idx(chip8->v[x]);
+            break;
+
+        case 0x33:
+            binary_decimal_conversion(chip8, x);
+            break;
+
+        case 0x55:
+            store(chip8, x);
+            break;
+
+        case 0x65:
+            load(chip8, x);
+            break;
+        }
         break;
 
     default:
