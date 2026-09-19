@@ -67,6 +67,36 @@ void display(Chip8 *chip8, uint8_t n_pixels_h, uint8_t vx_reg, uint8_t vy_reg)
     }
 }
 
+void sub(Chip8 *chip8, uint8_t a, uint8_t b)
+{
+    chip8->v[V_FLAG_IDX] = 0;
+    if (chip8->v[a] >= chip8->v[b])
+    {
+        chip8->v[V_FLAG_IDX] = 1;
+    }
+    chip8->v[a] = chip8->v[a] - chip8->v[b];
+}
+
+void shift(Chip8 *chip8, uint8_t x, uint8_t y, bool is_right)
+{
+    if (false)
+    {
+        chip8->v[x] = chip8->v[y];
+    }
+
+    uint8_t shifted;
+    if (is_right)
+    {
+        shifted = chip8->v[x] & 0x1;
+        chip8->v[x] = chip8->v[x] >> 1;
+    }
+    else
+    {
+        shifted = chip8->v[x] & 0x80;
+        chip8->v[x] = chip8->v[x] << 1;
+    }
+    chip8->v[V_FLAG_IDX] = shifted;
+}
 #pragma endregion
 
 bool cpu_fetch(Chip8 *chip8, uint16_t *instruction)
@@ -101,10 +131,48 @@ void cpu_decode_execute(Chip8 *chip8, uint16_t *instruction)
         {
             clear_screen(chip8);
         }
+        if (*instruction == 0x00EE)
+        {
+            // return from subroutine
+            uint16_t pop_pc;
+            if (pop(chip8->stack, &pop_pc))
+            {
+                chip8->pc = pop_pc;
+            }
+        }
+
         break;
 
     case 0x1:
         jump(chip8, nnn);
+        break;
+
+    case 0x2:
+        push(chip8->stack, chip8->pc);
+        break;
+
+    case 0x3:
+        // skip if equal
+        if (chip8->v[x] == nn)
+        {
+            chip8->pc += 2;
+        }
+        break;
+
+    case 0x4:
+        // skip if not equal
+        if (chip8->v[x] != nn)
+        {
+            chip8->pc += 2;
+        }
+        break;
+
+    case 0x5:
+        // skip if vx == vy
+        if (chip8->v[x] == chip8->v[y])
+        {
+            chip8->pc += 2;
+        }
         break;
 
     case 0x6:
@@ -116,8 +184,72 @@ void cpu_decode_execute(Chip8 *chip8, uint16_t *instruction)
         set_reg_value(chip8, x, chip8->v[x] + nn);
         break;
 
+    case 0x8:
+        switch (n)
+        {
+        case 0x0:
+            chip8->v[x] = chip8->v[y];
+            break;
+        case 0x1:
+            chip8->v[x] = chip8->v[x] | chip8->v[y];
+            break;
+        case 0x2:
+            chip8->v[x] = chip8->v[x] & chip8->v[y];
+            break;
+        case 0x3:
+            chip8->v[x] = chip8->v[x] ^ chip8->v[y];
+            break;
+        case 0x4:
+            uint16_t sum = chip8->v[x] + chip8->v[y];
+            if (sum > UINT8_MAX)
+            {
+                chip8->v[V_FLAG_IDX] = 1;
+            }
+            else
+            {
+                chip8->v[V_FLAG_IDX] = 0;
+            }
+            chip8->v[x] = (uint8_t)sum;
+            break;
+        case 0x5:
+            sub(chip8, x, y);
+            break;
+        case 0x7:
+            sub(chip8, y, x);
+            break;
+        case 0x6:
+            shift(chip8, x, y, true);
+            break;
+        case 0xE:
+            shift(chip8, x, y, false);
+            break;
+        }
+        break;
+
+    case 0x9:
+        // skip if vx != vy
+        if (chip8->v[x] != chip8->v[y])
+        {
+            chip8->pc += 2;
+        }
+        break;
+
     case 0xA:
         chip8->i = nnn;
+        break;
+
+    case 0xB:
+        uint8_t addr = nnn;
+        // superchip
+        if (false)
+        {
+            addr = nnn + chip8->v[x];
+        }
+        chip8->pc = addr;
+        break;
+
+    case 0xC:
+        chip8->v[x] = (uint8_t)rand() & nn;
         break;
 
     case 0xD:
